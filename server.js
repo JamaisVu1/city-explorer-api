@@ -16,13 +16,12 @@ class Forecast {
     this.description = description;
   }
 }
-// http://localhost:3000/weather?lat=1000&lon=2000&searchQuery=Baltimore
-// this is a request URL
 
 app.get("/weather", (request, response) => {
-  const { searchQuery } = request.query;
+  const { lat, lon } = request.query;
 
-  const foundCity = weather.find(city => city.city_name === searchQuery);
+  // Assuming that your weather.json data structure has latitude and longitude fields
+  const foundCity = weather.find(city => city.lat === parseFloat(lat) && city.lon === parseFloat(lon));
 
   if (foundCity) {
     
@@ -36,13 +35,12 @@ app.get("/weather", (request, response) => {
 
   } else {
 
-    const errorMessage = { error: `${searchQuery} not found.` };
+    const errorMessage = { error: `City not found for lat=${lat} and lon=${lon}.` };
     console.error(errorMessage.error);
     response.status(404).json(errorMessage);
 
   }
 });
 
-//class 
-
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+
