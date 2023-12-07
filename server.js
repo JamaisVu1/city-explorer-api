@@ -5,10 +5,11 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const axios = require("axios");
 const app = express();
 app.use(cors());
 const PORT = process.env.PORT || 3000;
-const weather = require('./data/weather.json');
+const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
 
 class Forecast {
   constructor(date, description) {
@@ -17,30 +18,39 @@ class Forecast {
   }
 }
 
-app.get("/weather", (request, response) => {
+app.get("/weather", async (request, response) => {
   const { lat, lon } = request.query;
 
-  // Assuming that your weather.json data structure has latitude and longitude fields
-  const foundCity = weather.find(city => city.lat === parseFloat(lat) && city.lon === parseFloat(lon));
-
-  if (foundCity) {
-    
-    const forecastArray = foundCity.data.map(day => {
-      const forecast = new Forecast(day.valid_date, day.weather.description);
-      return forecast;
+  try {
+    const apiResponse = await axios.get("https://api.weatherbit.io/v2.0/current", {
+      params: {
+        key: WEATHER_API_KEY,
+        lat,
+        lon,
+        days: 5,
+      },
     });
 
-    console.log(forecastArray);
-    response.send({ city: foundCity.city_name, forecast: forecastArray });
+    const forecastArray = apiResponse.data.data.map(day => {
+      return new Forecast(day.datetime, day.weather.description);
+    });
 
-  } else {
+    const formattedResponse = forecastArray.map(day => ({
+      date: day.date,
+      description: day.description,
+    }));
 
-    const errorMessage = { error: `City not found for lat=${lat} and lon=${lon}.` };
-    console.error(errorMessage.error);
-    response.status(404).json(errorMessage);
-
+    console.log(formattedResponse);
+    response.send({ city: apiResponse.data.city_name, forecast: formattedResponse });
+  } catch (error) {
+    console.error("Error making API request:", error.message);
+    console.error("Error details:", error.response ? error.response.data : "No response data");
+    response.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+
+
+
 
