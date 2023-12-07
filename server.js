@@ -28,7 +28,7 @@ class Movies {
 }
 
 app.get('/movies', async (request, response) => {
-  const { lat, lon, city } = request.query;
+  const { city } = request.query;
 
   try {
     
@@ -36,8 +36,7 @@ app.get('/movies', async (request, response) => {
       params: {
         api_key: MOVIE_API_KEY,
         query: city, 
-        lat,
-        lon,
+        
       },
     });
 
