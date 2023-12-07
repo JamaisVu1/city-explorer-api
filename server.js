@@ -10,6 +10,7 @@ const app = express();
 app.use(cors());
 const PORT = process.env.PORT || 3000;
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
+const MOVIE_API_KEY = process.env.MOVIE_API_KEY;
 
 class Forecast {
   constructor(date, description) {
@@ -17,6 +18,43 @@ class Forecast {
     this.description = description;
   }
 }
+
+
+class Movies {
+  constructor(image_url, title){
+    this.image_url=image_url;
+    this.title=title;
+}
+}
+
+app.get('/movies', async (request, response) => {
+  const { lat, lon, city } = request.query;
+
+  try {
+    
+    const tmdbResponse = await axios.get('https://api.themoviedb.org/3/search/movie', {
+      params: {
+        api_key: MOVIE_API_KEY,
+        query: city, 
+        lat,
+        lon,
+      },
+    });
+
+    
+    const moviesData = tmdbResponse.data.results.map(movie => ({
+      image_url: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+      title: movie.title,
+    }));
+
+    
+    response.json(moviesData);
+  } catch (error) {
+    console.error('Error making TMDb API request:', error.message);
+    response.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 app.get("/weather", async (request, response) => {
   const { lat, lon } = request.query;
